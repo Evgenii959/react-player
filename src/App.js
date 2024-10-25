@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef } from 'react';
 import { useMachine } from '@xstate/react';
 import { Modal, Button } from 'antd';
 import ReactPlayer from 'react-player';
@@ -11,12 +11,16 @@ const App = () => {
       videoRef,
     },
   });
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [videoWidth, setVideoWidth] = useState('452px');
-  const [videoHeight, setVideoHeight] = useState('254px');
 
   const openModal = () => {
-    setIsModalVisible(true);
+    send({ type: 'OPEN_MODAL' });
+    setTimeout(() => {
+      send({ type: 'PLAY' });
+    }, 100);
+  };
+
+  const closeModal = () => {
+    send({ type: 'CLOSE_MODAL' });
   };
 
   const handlePlayPause = () => {
@@ -24,15 +28,7 @@ const App = () => {
   };
 
   const handleResize = () => {
-    if (videoWidth === '452px') {
-      setVideoWidth('1000px');
-      setVideoHeight('700px');
-      send({ type: 'RESIZE' });
-    } else {
-      setVideoWidth('452px');
-      setVideoHeight('254px');
-      send({ type: 'RESIZE' });
-    }
+    send({ type: 'RESIZE' });
   };
 
   const handleEnded = () => {
@@ -42,37 +38,17 @@ const App = () => {
     }, 100);
   };
 
-  useEffect(() => {
-    if (isModalVisible) {
-      send({ type: 'PLAY' });
-    } else {
-      send({ type: 'PAUSE' });
-    }
-  }, [isModalVisible, send]);
-
-  useEffect(() => {
-    console.log('Current state:', state.value);
-  }, [state]);
-
   return (
     <div>
-      <Button
-        type="primary"
-        onClick={openModal}
-      >
+      <Button type="primary" onClick={openModal}>
         Open Video Player
       </Button>
 
       <Modal
         title="PLAYER"
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          send({ type: 'PAUSE' });
-        }}
+        open={state.context.isModalVisible}
+        onCancel={closeModal}
         footer={null}
-        width={videoWidth}
-        height={videoHeight}
       >
         <ReactPlayer
           ref={videoRef}
@@ -91,9 +67,7 @@ const App = () => {
           }}
         >
           <Button onClick={handleResize}>
-            {videoWidth === '452px'
-              ? 'Expand Video'
-              : 'Shrink Video'}
+            {state.matches('mini') ? 'Expand Video' : 'Shrink Video'}
           </Button>
           <Button onClick={handlePlayPause}>
             {state.matches('playing') ? 'Pause' : 'Play'}

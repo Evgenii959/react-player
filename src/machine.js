@@ -1,13 +1,22 @@
-import { createMachine } from 'xstate';
+import { createMachine, assign } from 'xstate';
 
 const machine = createMachine(
   {
     id: 'player',
-    initial: 'mini',
+    initial: 'modalClosed',
     context: {
       videoRef: null,
+      isModalVisible: false,
     },
     states: {
+      modalClosed: {
+        on: {
+          OPEN_MODAL: {
+            target: 'mini',
+            actions: assign({ isModalVisible: true }),
+          },
+        },
+      },
       mini: {
         on: {
           toggle: 'full',
@@ -15,6 +24,10 @@ const machine = createMachine(
           RESIZE: {
             actions: 'resizeVideo',
             target: 'full',
+          },
+          CLOSE_MODAL: {
+            target: 'modalClosed',
+            actions: assign({ isModalVisible: false }),
           },
         },
       },
@@ -29,6 +42,10 @@ const machine = createMachine(
             actions: 'resizeVideo',
             target: 'mini',
           },
+          CLOSE_MODAL: {
+            target: 'modalClosed',
+            actions: assign({ isModalVisible: false }),
+          },
         },
       },
       playing: {
@@ -39,6 +56,10 @@ const machine = createMachine(
           RESIZE: {
             actions: 'resizeVideo',
           },
+          CLOSE_MODAL: {
+            target: 'modalClosed',
+            actions: assign({ isModalVisible: false }),
+          },
         },
       },
       paused: {
@@ -47,6 +68,10 @@ const machine = createMachine(
           PLAY: 'playing',
           RESIZE: {
             actions: 'resizeVideo',
+          },
+          CLOSE_MODAL: {
+            target: 'modalClosed',
+            actions: assign({ isModalVisible: false }),
           },
         },
       },
@@ -64,6 +89,7 @@ const machine = createMachine(
           context.videoRef.current.getInternalPlayer().pause();
         }
       },
+      resizeVideo: () => console.log('Video resized'),
     },
   }
 );
